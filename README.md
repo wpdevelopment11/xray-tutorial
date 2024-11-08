@@ -466,10 +466,11 @@ cd ~
 curl.exe -fLo xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-windows-64.zip
 Expand-Archive xray.zip xray
 rm xray.zip
-cd xray; ls
+cd xray
+pwd
 ```
 
-Close PowerShell and add the directory that contains the `xray.exe` binary (e.g. `C:\Users\holu\xray`) to your **system PATH**. How to modify your system PATH is [explained here](https://community.hetzner.com/tutorials/obfuscating-wireguard-using-wstunnel#step-32---windows-client).
+Path to directory with `xray.exe` binary is printed to your terminal. Add it to your **system PATH**. How to modify your system PATH is [explained here](https://community.hetzner.com/tutorials/obfuscating-wireguard-using-wstunnel#step-32---windows-client).
 
 Open PowerShell and run the following command to check that PATH is updated properly:
 
