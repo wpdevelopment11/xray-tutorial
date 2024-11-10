@@ -641,21 +641,19 @@ xray run -c /usr/local/etc/xray/config.json
 
 Now, `xray` is running and you can configure your apps to use a SOCKS proxy.
 
-* Use a SOCKS proxy with Google Chrome (Chromium)
+### Step 3.3.1 -  Use a SOCKS proxy with Google Chrome (Chromium)
 
-  Close all Chrome windows and run the following command:
+Close all Chrome windows and run the following command:
 
-  * In this case the name of the binary is `google-chrome`, on your system it may be different. For example, it can be called `chromium`.
+* In this case the name of the binary is `google-chrome`, on your system it may be different. For example, it can be called `chromium`.
 
-  ```bash
-  google-chrome --proxy-server="socks5://127.0.0.1:1080"
-  ```
+```bash
+google-chrome --proxy-server="socks5://127.0.0.1:1080"
+```
 
-<br>
+### Step 3.3.2 - Use a SOCKS proxy with Firefox
 
-* Use a SOCKS proxy with Firefox
-
-  [It's configured in the same way as on Windows.](#firefox_socks)
+[It's configured in the same way as on Windows.](#firefox_socks)
 
 ### Step 3.3.3 - Set _Network Proxy_ in GNOME
 
