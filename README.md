@@ -676,6 +676,154 @@ Follow the steps below.
 
 Open the browser and test your Internet connection, it should go through the proxy now.
 
+## Step 4 - Cloudflare proxy (Optional)
+
+If your server IP got blocked you will not be able to directly connect to your Xray server. You need an intermediate server through which you would connect. Cloudflare can be used as such a server.
+
+You need a domain if you don't have one yet. You need an apex domain (doesn't contain subdomain) e.g. `example.com`, not `sub.example.com`.
+
+> **Note:**
+> You can find a cheap domain to register using [TLD List](https://tld-list.com). Domains are usually cheap when you register them and expensive when you renew. But you don't need to renew this domain, when it expires. You can just register a new one.
+
+Go to https://cloudflare.com and create an account. [Add your domain and configure it](https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/) by putting Cloudflare nameservers in the domain settings of your domain register.
+
+Now you need to add an `A` and optionally `AAAA` DNS record with an IP address of your server, i.e. an IP to which you can't directly connect, and access to which will be proxied by Cloudflare. Go to your domain in the Cloudflare dashboard and open _DNS_ > _Records_ and click _Add record_. Add an `A` record with name `@` and proxy enabled:
+
+* Replace `10.0.0.1` with your server IP address.
+
+| Type | Name | IPv4 address | Proxy status | TTL |
+| ---  | --- |  --- | --- | --- |
+| A | @ | 10.0.0.1 | On | Auto |
+
+After you have done that, the result will be similar to the image below:
+
+![](images/cloudflare-dns.png)
+
+Now, go to _SSL/TLS_ and click _Configure_. Click _Full_ if you're using a self-signed certificate. Or click _Full (Strict)_ if you're using the Let's Encrypt certificate.
+
+Click _Network_ in the sidebar and make sure that _WebSockets_ are enabled.
+
+It's time to change your server and client's configuration. The transport should be changed from `tcp` to `ws` (WebSocket), which Cloudflare supports.
+
+### Step 4.1 - Server configuration
+
+In your Xray server `streamSettings` replace `tcp` with `ws`.
+
+<details>
+
+<summary>After you replaced <code>tcp</code> with <code>ws</code>, your server configuration will look like this:</summary>
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "port": 443,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                        "email": "John"
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "ws",
+                "security": "tls",
+                "tlsSettings": {
+                    "certificates": [
+                        {
+                            "certificateFile": "/etc/letsencrypt/live/example.com/fullchain.pem",
+                            "keyFile": "/etc/letsencrypt/live/example.com/privkey.pem"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        }
+    ]
+}
+```
+
+</details>
+
+### Step 4.2 - Android client
+
+1. Open v2rayNG and tap pencil to edit your configuration:
+
+   ![](images/xray-android-v2rayng-14.png)
+
+2. Fill in _address_ with your domain and select _ws_ as _Network_:
+
+   ![](images/xray-android-v2rayng-15.png)
+
+3. Save your configuration:
+
+   ![](images/xray-android-v2rayng-9.png)
+
+4. Connect to your Xray server and check the connection as described in [step 3.1](#step-31---android-client).
+
+### Step 4.3 - Windows and Linux client
+
+Use your domain as an `address` and replace `tcp` with `ws` in `streamSettings`.
+
+<details>
+
+<summary>After you made those changes, the configuration for SOCKS proxy will look like this:</summary>
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "listen": "127.0.0.1",
+            "port": "1080",
+            "protocol": "socks",
+            "settings": {
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "example.com",
+                        "port": 443,
+                        "users": [
+                            {
+                                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                                "encryption": "none",
+                                "level": 0
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "ws",
+                "security": "tls"
+            }
+        }
+    ]
+}
+```
+
+</details>
+
 ## Conclusion
 
 Xray is a good solution when your primary use case is to access blocked websites and apps. Contrary to popular VPN protocols it's not easy to block. The drawback is obviously its documentation, which is Chinese oriented.
