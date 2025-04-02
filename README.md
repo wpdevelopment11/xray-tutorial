@@ -824,6 +824,196 @@ Use your domain as an `address` and replace `tcp` with `ws` in `streamSettings`.
 
 </details>
 
+## Step 5 - Blocking ads (Optional)
+
+As an alternative to a browser extension like uBlock Origin you can use Xray itself to block a large portion of ads.
+
+Ad blocking can be achieved by adjusting your [Xray client](#step-321---socks-proxy) configuration as follows:
+
+* Add a new outbound to the `outbounds` array, which will be used for blocking:
+
+  ```json
+  {
+      "protocol": "blackhole",
+      "tag": "block"
+  }
+  ```
+
+  Make sure to add it **after** the outbound you had previously.
+  The first outbound in the array is the default one.
+
+* Now, add the `routing` section to your top-level configuration object:
+
+  ```
+  "routing": {
+      "rules": [
+          {
+              "type": "field",
+              "outboundTag": "block",
+              "domain": [
+                  "geosite:category-ads-all"
+              ]
+          }
+      ]
+  }
+  ```
+
+  This routing configuration blocks all domains that belongs to [category-ads-all](https://github.com/v2fly/domain-list-community/blob/master/data/category-ads-all). You can use other [lists of domains](https://github.com/v2fly/domain-list-community) for blocking with `geosite:` prefix.
+
+<details>
+
+<summary>The resulting client configuration with ad blocking:</summary>
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "listen": "127.0.0.1",
+            "port": "1080",
+            "protocol": "socks",
+            "settings": {
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "example.com",
+                        "port": 443,
+                        "users": [
+                            {
+                                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                                "encryption": "none",
+                                "level": 0
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "tls",
+                "tlsSettings": {
+                    "allowInsecure": false
+                }
+            }
+        },
+        {
+            "protocol": "blackhole",
+            "tag": "block"
+        }
+    ],
+    "routing": {
+        "rules": [
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "domain": [
+                    "geosite:category-ads-all"
+                ]
+            }
+        ]
+    }
+}
+```
+
+</details>
+
+## Step 5.1 - Blocking adult websites
+
+Similarly to ads you can block adult websites, adjust your routing accordingly by adding a new item to the `domain` array:
+
+```
+"routing": {
+    "rules": [
+        {
+            "type": "field",
+            "outboundTag": "block",
+            "domain": [
+                "geosite:category-ads-all",
+                "geosite:category-porn"
+            ]
+        }
+    ]
+}
+```
+
+<details>
+
+<summary>The resulting client configuration with ads and adult websites blocked:</summary>
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "listen": "127.0.0.1",
+            "port": "1080",
+            "protocol": "socks",
+            "settings": {
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "example.com",
+                        "port": 443,
+                        "users": [
+                            {
+                                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                                "encryption": "none",
+                                "level": 0
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "tls",
+                "tlsSettings": {
+                    "allowInsecure": false
+                }
+            }
+        },
+        {
+            "protocol": "blackhole",
+            "tag": "block"
+        }
+    ],
+    "routing": {
+        "rules": [
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "domain": [
+                    "geosite:category-ads-all",
+                    "geosite:category-porn"
+                ]
+            }
+        ]
+    }
+}
+```
+
+</details>
+
 ## Conclusion
 
 Xray is a good solution when your primary use case is to access blocked websites and apps. Contrary to popular VPN protocols it's not easy to block. The drawback is obviously its documentation, which is Chinese oriented.
