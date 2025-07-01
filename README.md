@@ -1014,6 +1014,104 @@ Similarly to ads you can block adult websites, adjust your routing accordingly b
 
 </details>
 
+## Step 5.2 - Blocking specific time-wasters
+
+If you have specific websites where you tend to waste your time, you can block them individually,
+instead of using the categories mentioned above. This will create friction, and you will stop visiting them.
+
+The routing configuration with specific websites blocked looks as follows:
+
+```
+"routing": {
+    "rules": [
+        {
+            "type": "field",
+            "outboundTag": "block",
+            "domain": [
+                "full:www.reddit.com",
+                "full:news.ycombinator.com",
+                "full:hn.algolia.com",
+                "full:x.com"
+            ]
+        }
+    ]
+}
+```
+
+If you want to block subdomains of the particular domain, you can use `domain:` instead of `full:`.
+For example, `domain:reddit.com` will block `reddit.com` and its subdomains like `www.reddit.com`.
+
+<details>
+
+<summary>The resulting client configuration with time-wasters blocked:</summary>
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "listen": "127.0.0.1",
+            "port": "1080",
+            "protocol": "socks",
+            "settings": {
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "example.com",
+                        "port": 443,
+                        "users": [
+                            {
+                                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                                "encryption": "none",
+                                "level": 0
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "tls",
+                "tlsSettings": {
+                    "allowInsecure": false
+                }
+            }
+        },
+        {
+            "protocol": "blackhole",
+            "tag": "block"
+        }
+    ],
+    "routing": {
+        "rules": [
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "domain": [
+                    "domain:reddit.com",
+                    "full:news.ycombinator.com",
+                    "full:hn.algolia.com",
+                    "full:x.com"
+                ]
+            }
+        ]
+    }
+}
+```
+
+</details>
+
+
 ## Conclusion
 
 Xray is a good solution when your primary use case is to access blocked websites and apps. Contrary to popular VPN protocols it's not easy to block. The drawback is obviously its documentation, which is Chinese oriented.
