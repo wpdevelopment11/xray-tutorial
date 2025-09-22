@@ -676,7 +676,7 @@ Follow the steps below.
 
 Open the browser and test your Internet connection, it should go through the proxy now.
 
-## Step 4 - Cloudflare proxy (Optional)
+## Step 4 - Cloudflare proxy (Recommended)
 
 If your server IP got blocked you will not be able to directly connect to your Xray server. You need an intermediate server through which you would connect. Cloudflare can be used as such a server.
 
