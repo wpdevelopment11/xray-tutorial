@@ -85,7 +85,7 @@ The skeleton of the server configuration (e.g. `/usr/local/etc/xray/config.json`
 * `inbounds[].streamSettings` specify how the data gets sent over the wire. Protocols that you define here are used to penetrate the firewall. TCP with TLS encryption is used here. Other protocols are available, for example WebSockets.
 * `inbounds[].streamSettings.tlsSettings.certificates` is empty for now. In the steps below, you will create a certificate and add it here.
 
-Now, let's add the first client. The client object looks like this:
+Now, let's add the first client. The client object looks like this: <a name="client_uuid"></a>
 
 * `id` is used for client authentication. You can think of it like the user password.
 * `email` is used to distinguish clients in the logs. This doesn't need to be a valid email address. You can just put the name of the person for which you want to add a client.
@@ -345,7 +345,7 @@ The configuration is complete and you can put it into the file:
 sudo nano /usr/local/etc/xray/config.json
 ```
 
-You can test your configuration for errors using the following command:
+You can test your configuration for errors using the following command: <a name="server_start"></a>
 
 ```bash
 xray run -test -c /usr/local/etc/xray/config.json
@@ -416,7 +416,7 @@ Install [v2rayNG](https://play.google.com/store/apps/details?id=com.v2ray.ang) o
 
    ![](images/xray-android-v2rayng-3.png)
 
-3. Fill in fields in the configuration: <a id="vless_config"></a>
+3. Fill in fields in the configuration: <a name="vless_config"></a>
 
    * Replace `example.com` in _address_ with your domain. If you're using a **self-signed certificate**, fill in _address_ with an IP address of your server.
    * Put your client ID into the _id_ field. It should be the same client ID that you added in the [server configuration](#step-2---server-configuration).
@@ -447,7 +447,7 @@ Install [v2rayNG](https://play.google.com/store/apps/details?id=com.v2ray.ang) o
 
    ![](images/xray-android-v2rayng-11.png)
 
-8. Tap to check the connection, it should be successful:
+8. Tap to check the connection, it should be successful: <a name="check_connection"></a>
 
    ![](images/xray-android-v2rayng-12.png)
 
@@ -555,7 +555,7 @@ xray run -c "$env:USERPROFILE\xray_config.json"
 
 Now, `xray` is running and you can configure your apps to use a SOCKS proxy.
 
-* **Use a SOCKS proxy with Google Chrome**
+* **Use a SOCKS proxy with Google Chrome** <a name="windows_apps"></a>
 
   Find the Google Chrome shortcut and open its _Properties_.
 
@@ -579,7 +579,7 @@ Now, `xray` is running and you can configure your apps to use a SOCKS proxy.
 
 <br>
 
-* **Use a SOCKS proxy with Firefox** <a id="firefox_socks"></a>
+* **Use a SOCKS proxy with Firefox** <a name="firefox_socks"></a>
 
   Consult [the official documentation](https://support.mozilla.org/en-US/kb/connection-settings-firefox). Fill in _SOCKS Host_ with `127.0.0.1` and corresponding _Port_ with `1080`. Click _SOCKS v5_ and select _Proxy DNS when using SOCKS v5_.
 
@@ -676,7 +676,7 @@ Follow the steps below.
 
 Open the browser and test your Internet connection, it should go through the proxy now.
 
-## Step 4 - Cloudflare proxy (Recommended)
+## Step 4 - Cloudflare proxy
 
 If your server IP got blocked you will not be able to directly connect to your Xray server. You need an intermediate server through which you would connect. Cloudflare can be used as such a server.
 
@@ -769,7 +769,7 @@ In your Xray server `streamSettings` replace `tcp` with `ws`.
 
    ![](images/xray-android-v2rayng-9.png)
 
-4. Connect to your Xray server and check the connection as described in [step 3.1](#step-31---android-client).
+4. Activate VPN and [check your connection](#check_connection).
 
 ### Step 4.3 - Windows and Linux client
 
@@ -824,7 +824,243 @@ Use your domain as an `address` and replace `tcp` with `ws` in `streamSettings`.
 
 </details>
 
-## Step 5 - Blocking ads (Optional)
+## Step 5 - Configuring XTLS Vision and Reality
+
+If the blocking is severe and the domain whitelist is used to determine if the connection will be allowed or blocked, the configuration described in [Step 2](#step-2---server-configuration)
+and [Step 4](#step-4---cloudflare-proxy) will not work. You need to masquerade your Xray server as one of the whitelisted websites, for connection
+to be successful.
+
+**What is XTLS and Reality?**
+
+To put it simply, XTLS technology is used to prevent double encryption of packets, one between the Xray client and server, and one by your browser and the target website. XTLS allows you to use only one layer of encryption, established by your browser.
+
+Reality on the other hand is needed to make your connections to Xray server appear like a visit to a legitimate and whitelisted website,
+thus, preventing blocking of your connections.
+
+**Prerequisites**
+
+* Generate a key pair that will be used to protect your Xray Reality server. <a name="generate_key"></a>
+
+  Run in your shell:
+
+  ```bash
+  xray x25519
+  ```
+
+  Save the output, it will be used later.
+
+  _Public key_ will be used as a `password` in a client configuration.
+
+  _Private key_ will be used as `privateKey` in a server configuration.
+
+  I will use the following keys in the examples below:
+
+  ```
+  Private key: iOEARLzm7u7VJoygXXK8b1Nt6eQsoyYgFP8_3cOLtXE
+  Public key: onBX9VWPbGC3tIELZ9jblx7Hyu2aY4SPag1oxXHE41M
+  ```
+
+* Find a website that is outside of your country's firewall and which is not blocked, i.e. you can access it without VPN. <a name="choose_domain"></a>
+  This website should not use Cloudflare proxy, it must support TLS 1.3 and HTTP/2 protocols. See below how to check this.
+
+  Your Xray Reality server will masquerade as a web server that hosts this website.
+
+  Most websites support TLS 1.3 nowadays. But if you want to check it anyway, run the following command:
+
+  * Replace `example.com` with a target website.
+
+  ```bash
+  curl --tlsv1.3 https://example.com
+  ```
+
+  If you don't get an error: `alert handshake failure`, then it's supported.
+
+  HTTP/2 support on the other hand is hit-and-miss, run the following command to test it:
+
+  ```bash
+  curl -v --http2 https://example.com > /dev/null
+  ```
+
+  Check the request and response headers, they should contain:
+
+  ```
+  > GET / HTTP/2
+  ...
+  < HTTP/2 200
+  ```
+
+  To find out if the website uses Cloudflare, you can check its DNS NS records or use a service like [Who Hosts This](https://www.who-hosts-this.com).
+  To check the NS records, run:
+
+  ```bash
+  dig example.com NS
+  ```
+
+In the following server and client configurations you will need to replace `example.com` with your chosen website that supports TLS 1.3 and HTTP/2,
+and `10.0.0.1` with an **IP of your server**, where Xray is installed.
+
+### Step 5.1 - Xray Reality server configuration
+
+The configuration below creates a server with XTLS Vision and Reality support listening on 443 port.
+It contains a client with a property `flow` set to `xtls-rprx-vision` which enables XTLS support.
+How to generate an id for a client is [described previously](#client_uuid).
+
+Create `config.json` with the following content:
+
+* Replace `example.com` with a [chosen domain](#choose_domain).
+* Replace `privateKey` with a private key that [you generated](#generate_key).
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "port": 443,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                        "email": "John",
+                        "flow": "xtls-rprx-vision"
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "raw",
+                "security": "reality",
+                "realitySettings": {
+                    "dest": "example.com:443",
+                    "serverNames": [
+                        "example.com"
+                    ],
+                    "privateKey": "iOEARLzm7u7VJoygXXK8b1Nt6eQsoyYgFP8_3cOLtXE",
+                    "shortIds": [
+                        ""
+                    ]
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        }
+    ]
+}
+```
+
+Now, you can [start your server](#server_start).
+
+If you run the command below it should print the same content that would be returned if you access `example.com` directly.
+In other words, your Xray server masquerades as a web server for the `example.com` website.
+Where `example.com` is a [whitelisted  domain chosen by you](#choose_domain) for Reality configuration.
+
+* Replace `example.com` with a [chosen domain](#choose_domain) and `10.0.0.1` with an **IP of your server**.
+
+```bash
+curl --resolve example.com:443:10.0.0.1 https://example.com
+```
+
+You're ready to configure your client devices.
+
+### Step 5.2 - Xray Reality SOCKS proxy client configuration
+
+The client configuration below starts SOCKS proxy server that you can use to access the Internet through your Xray Reality server.
+You can [configure your apps on Windows](#windows_apps) and [Linux](#step-331----use-a-socks-proxy-with-google-chrome-chromium) to use this SOCKS proxy.
+
+Create the `config.json` file with the following content:
+
+And adjust these two settings:
+
+* `id` corresponds to an `id` of the client in [server configuration](#step-51---xray-reality-server-configuration).
+* `password` is the **public** key that [you generated](#generate_key).
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "listen": "127.0.0.1",
+            "port": "1080",
+            "protocol": "socks",
+            "settings": {
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "settings": {
+                "address": "10.0.0.1",
+                "port": 443,
+                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+            },
+            "streamSettings": {
+                "network": "raw",
+                "security": "reality",
+                "realitySettings": {
+                    "fingerprint": "chrome",
+                    "serverName": "example.com",
+                    "password": "onBX9VWPbGC3tIELZ9jblx7Hyu2aY4SPag1oxXHE41M",
+                    "shortId": ""
+                }
+            }
+        }
+    ]
+}
+```
+
+Save your changes and start the SOCKS proxy server with the following command:
+
+```bash
+xray -c config.json
+```
+
+### Step 5.3 - Xray Reality Android client configuration
+
+1. Create a new [VLESS configuration in v2rayNG](#step-31---android-client) with the following settings:
+
+   * Fill in _address_ with an IP of your server.
+   * Put your client ID into the _id_ field. It should correspond to the client ID in the [server configuration](#step-51---xray-reality-server-configuration).
+   * Open _flow_ menu and select _xtls-rprx-vision_.
+
+   ![](images/xray-android-v2rayng-reality-1.png)
+
+2. Scroll and change the following settings:
+
+   * Select _tcp_ as a _Network_.
+   * Open _TLS_ menu and select _reality_.
+   * Fill in _SNI_ field with a [chosen whitelisted domain](#choose_domain).
+   * Select _chrome_ as a _Fingerprint_.
+
+   ![](images/xray-android-v2rayng-reality-2.png)
+
+3. Fill in _PublicKey_ field with a key that [you generated](#generate_key).
+
+   ![](images/xray-android-v2rayng-reality-3.png)
+
+4. Save your configuration:
+
+   ![](images/xray-android-v2rayng-reality-4.png)
+
+5. Activate VPN and [check your connection](#check_connection).
+
+### Step 5.4 - Further reading
+
+* [Description of XTLS Vision](https://github.com/seakfind/examples/blob/main/xtls-vision/README.md).
+* [How Reality works](https://github.com/XTLS/REALITY/blob/main/README.en.md).
+
+## Step 6 - Blocking ads
 
 As an alternative to a browser extension like uBlock Origin you can use Xray itself to block a large portion of ads.
 
@@ -927,7 +1163,7 @@ Ad blocking can be achieved by adjusting your [Xray client](#step-321---socks-pr
 
 </details>
 
-## Step 5.1 - Blocking adult websites
+## Step 6.1 - Blocking adult websites
 
 Similarly to ads you can block adult websites, adjust your routing accordingly by adding a new item to the `domain` array:
 
@@ -1014,7 +1250,7 @@ Similarly to ads you can block adult websites, adjust your routing accordingly b
 
 </details>
 
-## Step 5.2 - Blocking specific time-wasters
+## Step 6.2 - Blocking specific time-wasters
 
 If you have specific websites where you tend to waste your time, you can block them individually,
 instead of using the categories mentioned above. This will create friction, and you will stop visiting them.
