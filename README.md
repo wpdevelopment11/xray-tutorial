@@ -1055,7 +1055,157 @@ xray -c config.json
 
 5. Activate VPN and [check your connection](#check_connection).
 
-### Step 5.4 - Further reading
+### Step 5.4 - gRPC transport
+
+Xray Reality is often marketed as something that is hard or maybe impossible to block.
+In reality (no pun intended) it gets blocked. If that happened to you,
+the one thing you can try is to switch from a `tcp`/`raw` transport to the `grpc` transport.
+
+The configuration of a _server_ is mostly the same as in [Step 5.1](#step-51---xray-reality-server-configuration)
+with the following differences:
+
+* Remove `"flow": "xtls-rprx-vision"` from all of your clients. The `grpc` transport doesn't support it.
+* Change `"network": "raw"` or `"network": "tcp"` to `"network": "grpc"`.
+* Add a basic `grpcSettings` configuration. `serviceName` should match between a client and server.
+
+<details>
+
+<summary>Your Reality server with the gRPC transport will look as follows:</summary>
+
+<a name="reality_grpc_server"></a>
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "port": 443,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                        "email": "John"
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "grpc",
+                "security": "reality",
+                "realitySettings": {
+                    "dest": "example.com:443",
+                    "serverNames": [
+                        "example.com"
+                    ],
+                    "privateKey": "iOEARLzm7u7VJoygXXK8b1Nt6eQsoyYgFP8_3cOLtXE",
+                    "shortIds": [
+                        ""
+                    ]
+                },
+                "grpcSettings": {
+                    "serviceName": "/somename"
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        }
+    ]
+}
+```
+
+</details>
+
+</br>
+
+The _client_ configuration is nearly identical to the one in [Step 5.2](#step-52---xray-reality-socks-proxy-client-configuration).
+
+Except, with the following changes:
+
+* Remove `"flow": "xtls-rprx-vision"`, as already mentioned this is not supported when using `grpc`.
+* Change `network` to `grpc`.
+* Add `grpcSettings` with a `multiMode` set to `true` and a `serviceName`
+that you specified in the [server configuration](#reality_grpc_server).
+
+  Enabling the `multiMode` is essential, otherwise I get a bunch of `ERR_SSL_PROTOCOL_ERROR` errors in my browser.
+
+<details>
+
+<summary>Your Reality client modified for gRPC will look like this:</summary>
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "listen": "127.0.0.1",
+            "port": "1080",
+            "protocol": "socks",
+            "settings": {
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "settings": {
+                "address": "10.0.0.1",
+                "port": 443,
+                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                "encryption": "none"
+            },
+            "streamSettings": {
+                "network": "grpc",
+                "security": "reality",
+                "realitySettings": {
+                    "fingerprint": "chrome",
+                    "serverName": "example.com",
+                    "password": "onBX9VWPbGC3tIELZ9jblx7Hyu2aY4SPag1oxXHE41M",
+                    "shortId": ""
+                },
+                "grpcSettings": {
+                    "serviceName": "/somename",
+                    "multiMode": true
+                }
+            }
+        }
+    ]
+}
+```
+
+</details>
+
+</br>
+
+How to configure Xray Reality on Android is explained in [Step 5.3](#step-53---xray-reality-android-client-configuration).
+To make it work with the `grpc` transport do the following:
+
+1. Deselect the flow, it should be empty:
+
+   ![](images/xray-android-v2rayng-reality-grpc-1.png)
+
+2. In the _Network_ menu select _grpc_.
+
+3. Select _multi_ as a _gRPC mode_.
+
+4. Fill in the _gRPC serviceName_ with the same value as in the [server configuration](#reality_grpc_server).
+
+   ![](images/xray-android-v2rayng-reality-grpc-2.png)
+
+5. Save your changes.
+
+6. Now, you can [test your connection](#check_connection).
+
+### Step 5.5 - Further reading
 
 * [Description of XTLS Vision](https://github.com/seakfind/examples/blob/main/xtls-vision/README.md).
 * [How Reality works](https://github.com/XTLS/REALITY/blob/main/README.en.md).
