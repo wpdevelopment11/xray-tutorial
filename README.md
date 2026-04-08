@@ -1,7 +1,5 @@
 ## Introduction
 
-> **Note from the author:** This tutorial was written for [community.hetzner.com](https://community.hetzner.com/) and was published by them, but then [it was deleted](https://github.com/hetzneronline/community-content/pull/987). Thus, I am publishing it here. Hope it helps.
-
 [Xray](https://github.com/XTLS/Xray-core) is a proxy with support for multiple network protocols. It's commonly used to penetrate firewalls to access blocked websites and apps. Xray is created by Chinese developers and is a fork of [V2Ray](https://github.com/v2fly/v2ray-core). This is why some documentation is only available in Chinese. There are many ways to configure Xray, depending on a use case and blocking that you want to circumvent. I will show you a simple configuration that works well for me.
 
 **Prerequisites**
