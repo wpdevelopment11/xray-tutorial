@@ -152,6 +152,8 @@ Additional clients can be added in the same way.
 
 You need to generate the TLS certificate. It will be used to establish an encrypted connection between client and server. There are two ways to do it. You can generate a self-signed certificate, this way you don't need a domain attached to your server. Alternatively, you can obtain a certificate from Let's Encrypt for your domain.
 
+<a name="self_signed_cert"></a>
+
 <details>
 
 <summary>Generate a self-signed certificate.</summary>
@@ -159,13 +161,13 @@ You need to generate the TLS certificate. It will be used to establish an encryp
 Run the following command:
 
 ```bash
-sudo /usr/local/xray/xray tls cert -file /usr/local/etc/xray/my > /dev/null
+sudo /usr/local/xray/xray tls cert -file /usr/local/etc/xray/my -expire 87600h > /dev/null
 ```
 
 Two files will be created:
 
-* `/usr/local/etc/xray/my_cert.pem` is your self-signed certificate.
-* `/usr/local/etc/xray/my_key.pem` is your private key.
+* `/usr/local/etc/xray/my.crt` is your self-signed certificate.
+* `/usr/local/etc/xray/my.key` is your private key.
 
 Now you need to create a JSON object for the certificate and add it to your Xray server configuration.
 
@@ -173,8 +175,8 @@ The certificate object will look like this:
 
 ```json
 {
-    "certificateFile": "/usr/local/etc/xray/my_cert.pem",
-    "keyFile": "/usr/local/etc/xray/my_key.pem"
+    "certificateFile": "/usr/local/etc/xray/my.crt",
+    "keyFile": "/usr/local/etc/xray/my.key"
 }
 ```
 
@@ -208,8 +210,8 @@ Put it into the `inbounds[].streamSettings.tlsSettings.certificates` array in th
                 "tlsSettings": {
                     "certificates": [
                         {
-                            "certificateFile": "/usr/local/etc/xray/my_cert.pem",
-                            "keyFile": "/usr/local/etc/xray/my_key.pem"
+                            "certificateFile": "/usr/local/etc/xray/my.crt",
+                            "keyFile": "/usr/local/etc/xray/my.key"
                         }
                     ]
                 }
@@ -429,11 +431,17 @@ Install [v2rayNG](https://play.google.com/store/apps/details?id=com.v2ray.ang) o
 
    ![](images/xray-android-v2rayng-6.png)
 
-5. If you're using a **self-signed certificate**, open the _allowInsecure_ menu and select _true_.
+5. If you're using a **self-signed certificate**, further configuration of TLS is needed. Skip this step otherwise.
+
+   * Fill in _SNI_ with any domain that is whitelisted in your region.
+
+   * Open the _Fingerprint_ menu and select _randomized_ or another value that works for you.
+
+   * Open the _allowInsecure_ menu and select _false_.
+
+   * Set _Certificate fingerprint (SHA-256)_ to the SHA-256 hash of your self-signed certificate. See [SOCKS proxy configuration](#socks_self_signed) for instructions on how to calculate it.
 
    ![](images/xray-android-v2rayng-7.png)
-
-   ![](images/xray-android-v2rayng-8.png)
 
 6. Save your configuration:
 
@@ -490,13 +498,12 @@ Alternatively, you can configure Xray to work like VPN to route all your traffic
 To configure your Xray client as a SOCKS proxy, use the following configuration.
 
 * Replace `example.com` with your domain.
-
-  If you're using a **self-signed certificate**, replace `example.com` with your server IP. Additionally set `"allowInsecure": true`.
 * Replace `id` with your client `id` from the [server configuration](#step-2---server-configuration).
 * `443` is the port on which the Xray server listens. It's the same port that is used in the [server configuration](#step-2---server-configuration).
 * `1080` is the port on which the local SOCKS proxy server listens. It will accept connections from your apps that are configured to use it.
 
   Apps that want to use the SOCKS proxy need to set `127.0.0.1` as a host, and `1080` as a port.
+* Tweak the `fingerprint` parameter as needed.
 
 ```json
 {
@@ -518,31 +525,85 @@ To configure your Xray client as a SOCKS proxy, use the following configuration.
         {
             "protocol": "vless",
             "settings": {
-                "vnext": [
-                    {
-                        "address": "example.com",
-                        "port": 443,
-                        "users": [
-                            {
-                                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
-                                "encryption": "none",
-                                "level": 0
-                            }
-                        ]
-                    }
-                ]
+                "address": "example.com",
+                "port": 443,
+                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                "encryption": "none"
             },
             "streamSettings": {
                 "network": "tcp",
                 "security": "tls",
                 "tlsSettings": {
-                    "allowInsecure": false
+                    "fingerprint": "randomized"
                 }
             }
         }
     ]
 }
 ```
+
+<a name="socks_self_signed"></a>
+
+<details>
+
+<summary>SOCKS proxy configuration if you are using a <b>self-signed certificate</b>:</summary>
+
+* Replace `10.0.0.1` with the IP of your server.
+
+* Replace `example.com` with a domain from the whitelist, in other words, the domain that is allowed in your region.
+
+* Replace the value in `pinnedPeerCertSha256` with a hash of your self-signed certificate.
+
+  If you generated the certificate as [described in Step 2](#self_signed_cert), then the command to obtain the hash
+  will look as follows:
+
+  ```shellsession
+  $ /usr/local/xray/xray tls hash --cert /usr/local/etc/xray/my.crt
+  Leaf SHA256:  d79bf24bf9b02c6e64b86e535177688bca6adcbf058f56a9b40e5a186458f193
+  ```
+
+* See the [configuration above](#step-321---socks-proxy) for an explanation of the other parameters.
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "listen": "127.0.0.1",
+            "port": "1080",
+            "protocol": "socks",
+            "settings": {
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "settings": {
+                "address": "10.0.0.1",
+                "port": 443,
+                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                "encryption": "none"
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "tls",
+                "tlsSettings": {
+                    "fingerprint": "randomized",
+                    "serverName": "example.com",
+                    "pinnedPeerCertSha256": "d79bf24bf9b02c6e64b86e535177688bca6adcbf058f56a9b40e5a186458f193"
+                }
+            }
+        }
+    ]
+}
+```
+
+</details>
 
 Run the commands below to put it into the file `xray_config.json` in your HOME directory and run `xray` with that configuration.
 
@@ -1028,7 +1089,7 @@ xray -c config.json
 
 1. Create a new [VLESS configuration in v2rayNG](#step-31---android-client) with the following settings:
 
-   * Fill in _address_ with an IP of your server.
+   * Fill in _address_ with the IP of your server.
    * Put your client ID into the _id_ field. It should correspond to the client ID in the [server configuration](#step-51---xray-reality-server-configuration).
    * Open _flow_ menu and select _xtls-rprx-vision_.
 
