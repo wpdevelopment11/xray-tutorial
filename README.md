@@ -896,7 +896,7 @@ To put it simply, XTLS technology is used to prevent double encryption of packet
 Reality on the other hand is needed to make your connections to Xray server appear like a visit to a legitimate and whitelisted website,
 thus, preventing blocking of your connections.
 
-**Prerequisites**
+**Prerequisites** <a name="reality_prerequisites"></a>
 
 * Generate a key pair that will be used to protect your Xray Reality server. <a name="generate_key"></a>
 
@@ -958,7 +958,7 @@ thus, preventing blocking of your connections.
 In the following server and client configurations you will need to replace `example.com` with your chosen website that supports TLS 1.3 and HTTP/2,
 and `10.0.0.1` with an **IP of your server**, where Xray is installed.
 
-### Step 5.1 - Xray Reality server configuration
+### Step 5.1 - Server configuration
 
 The configuration below creates a server with XTLS Vision and Reality support listening on 443 port.
 It contains a client with a property `flow` set to `xtls-rprx-vision` which enables XTLS support.
@@ -1026,7 +1026,7 @@ curl --resolve example.com:443:10.0.0.1 https://example.com
 
 You're ready to configure your client devices.
 
-### Step 5.2 - Xray Reality SOCKS proxy client configuration
+### Step 5.2 - SOCKS proxy client configuration
 
 The client configuration below starts SOCKS proxy server that you can use to access the Internet through your Xray Reality server.
 You can [configure your apps on Windows](#windows_apps) and [Linux](#step-331----use-a-socks-proxy-with-google-chrome-chromium) to use this SOCKS proxy.
@@ -1035,7 +1035,7 @@ Create the `config.json` file with the following content:
 
 And adjust these two settings:
 
-* `id` corresponds to an `id` of the client in [server configuration](#step-51---xray-reality-server-configuration).
+* `id` corresponds to an `id` of the client in [server configuration](#step-51---server-configuration).
 * `password` is the **public** key that [you generated](#generate_key).
 
 ```json
@@ -1085,12 +1085,12 @@ Save your changes and start the SOCKS proxy server with the following command:
 xray -c config.json
 ```
 
-### Step 5.3 - Xray Reality Android client configuration
+### Step 5.3 - Android client configuration
 
 1. Create a new [VLESS configuration in v2rayNG](#step-31---android-client) with the following settings:
 
    * Fill in _address_ with the IP of your server.
-   * Put your client ID into the _id_ field. It should correspond to the client ID in the [server configuration](#step-51---xray-reality-server-configuration).
+   * Put your client ID into the _id_ field. It should correspond to the client ID in the [server configuration](#step-51---server-configuration).
    * Open _flow_ menu and select _xtls-rprx-vision_.
 
    ![](images/xray-android-v2rayng-reality-1.png)
@@ -1114,13 +1114,25 @@ xray -c config.json
 
 5. Activate VPN and [check your connection](#check_connection).
 
-### Step 5.4 - gRPC transport
+### Step 5.4 - Further reading
 
-Xray Reality is often marketed as something that is hard or maybe impossible to block.
-In reality (no pun intended) it gets blocked. If that happened to you,
+* [Description of XTLS Vision](https://github.com/seakfind/examples/blob/main/xtls-vision/README.md).
+* [How Reality works](https://github.com/XTLS/REALITY/blob/main/README.en.md).
+
+## Step 6 - Using gRPC as a transport
+
+Before proceeding, read [Step 5](#step-5---configuring-xtls-vision-and-reality) first
+to get an understanding of Reality server and client configuration.
+
+[Xray Reality](#step-5---configuring-xtls-vision-and-reality) is often marketed as something that is hard or maybe impossible to block.
+In reality (no pun intended) it gets blocked. If that happens to you,
 the one thing you can try is to switch from a `tcp`/`raw` transport to the `grpc` transport.
 
-The configuration of a _server_ is mostly the same as in [Step 5.1](#step-51---xray-reality-server-configuration)
+**Prerequisites** to this step are the same [as in Step 5](#reality_prerequisites).
+
+### Step 6.1 - Server configuration
+
+The server configuration is mostly the same as in [Step 5.1](#step-51---server-configuration)
 with the following differences:
 
 * Remove `"flow": "xtls-rprx-vision"` from all of your clients. The `grpc` transport doesn't support it.
@@ -1130,8 +1142,6 @@ with the following differences:
 <details>
 
 <summary>Your Reality server with the gRPC transport will look as follows:</summary>
-
-<a name="reality_grpc_server"></a>
 
 ```json
 {
@@ -1180,16 +1190,16 @@ with the following differences:
 
 </details>
 
-</br>
+### Step 6.2 - SOCKS proxy client configuration
 
-The _client_ configuration is nearly identical to the one in [Step 5.2](#step-52---xray-reality-socks-proxy-client-configuration).
+The _client_ configuration is nearly identical to the one in [Step 5.2](#step-52---socks-proxy-client-configuration).
 
 Except, with the following changes:
 
-* Remove `"flow": "xtls-rprx-vision"`, as already mentioned this is not supported when using `grpc`.
+* Remove `"flow": "xtls-rprx-vision"`, as already mentioned, this is not supported when using `grpc`.
 * Change `network` to `grpc`.
 * Add `grpcSettings` with a `multiMode` set to `true` and a `serviceName`
-that you specified in the [server configuration](#reality_grpc_server).
+that you specified in the [server configuration](#step-61---server-configuration).
 
   Enabling the `multiMode` is essential, otherwise I get a bunch of `ERR_SSL_PROTOCOL_ERROR` errors in my browser.
 
@@ -1243,9 +1253,9 @@ that you specified in the [server configuration](#reality_grpc_server).
 
 </details>
 
-</br>
+### Step 6.3 - Android client configuration
 
-How to configure Xray Reality on Android is explained in [Step 5.3](#step-53---xray-reality-android-client-configuration).
+How to configure Xray Reality on Android is explained in [Step 5.3](#step-53---android-client-configuration).
 To make it work with the `grpc` transport do the following:
 
 1. Deselect the flow, it should be empty:
@@ -1256,7 +1266,7 @@ To make it work with the `grpc` transport do the following:
 
 3. Select _multi_ as a _gRPC mode_.
 
-4. Fill in the _gRPC serviceName_ with the same value as in the [server configuration](#reality_grpc_server).
+4. Fill in the _gRPC serviceName_ with the same value as in the [server configuration](#step-61---server-configuration).
 
    ![](images/xray-android-v2rayng-reality-grpc-2.png)
 
@@ -1264,12 +1274,210 @@ To make it work with the `grpc` transport do the following:
 
 6. Now, you can [test your connection](#check_connection).
 
-### Step 5.5 - Further reading
+## Step 7 - Using XHTTP as a transport
 
-* [Description of XTLS Vision](https://github.com/seakfind/examples/blob/main/xtls-vision/README.md).
-* [How Reality works](https://github.com/XTLS/REALITY/blob/main/README.en.md).
+The main benefit of XHTTP, as I see it, is that you can precisely limit the number of connections made to your Xray server. As you will see in my configuration below, I use only a single connection.
+This helps to circumvent blocking based on a number of simultaneous connections
+as all requests to the Xray server are multiplexed inside a single connection.
 
-## Step 6 - Blocking ads
+Most of the information provided in:
+
+* [Step 5 - Configuring XTLS Vision and Reality](#step-5---configuring-xtls-vision-and-reality)
+* [Step 6 - Using gRPC as a transport](#step-6---using-grpc-as-a-transport)
+
+still applies. I will not repeat what is explained there, so read those steps first.
+
+**Prerequisites** to this step are the same [as in Step 5](#reality_prerequisites).
+
+### Step 7.1 - Server configuration
+
+The configuration is pretty much the same as in [Step 6.1](#step-61---server-configuration) for the gRPC transport.
+
+The only difference is that we have `xhttpSettings` instead of `grpcSettings`.
+The `xhttpSettings.path` can be anything you like, but should match between a client and server.
+
+The `sockopt.trustedXForwardedFor` is needed to silence an Xray warning. Put a random string there that is a valid HTTP header name. It can be generated using `xray uuid`, for example. This value will not be used in this tutorial.
+
+How to generate the `privateKey` is [explained in Step 5](#generate_key).
+
+<details>
+
+<summary>Your Reality server with the XHTTP transport will look as follows:</summary>
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "port": 443,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                        "email": "John"
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "xhttp",
+                "security": "reality",
+                "realitySettings": {
+                    "dest": "example.com:443",
+                    "serverNames": [
+                        "example.com"
+                    ],
+                    "privateKey": "iOEARLzm7u7VJoygXXK8b1Nt6eQsoyYgFP8_3cOLtXE",
+                    "shortIds": [
+                        ""
+                    ]
+                },
+                "xhttpSettings": {
+                    "path": "/something"
+                },
+                "sockopt": {
+                    "trustedXForwardedFor": ["eeb412ac-47ac-4257-809b-f7c16ee2d6d8"]
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        }
+    ]
+}
+```
+
+</details>
+
+### Step 7.2 - SOCKS proxy client configuration
+
+As you can see, the `xhttpSettings.path` is the same as in [the server configuration](#step-71---server-configuration).
+
+The interesting bit of configuration is this:
+
+```
+"xmux": {
+    "maxConnections": 1
+}
+```
+
+which limits the number of connections to one and prevents blocking.
+
+<a name="tweak_fingerprint"></a>
+In my experience, you need to tweak the `fingerprint` setting to avoid being blocked.
+You can try these values one by one to find the working configuration:
+
+```
+android
+chrome
+edge
+firefox
+ios
+randomized
+safari
+```
+
+If your XHTTP client is unable to connect to your Xray server, try to change `fingerprint` first and see if it helps.
+
+How to create a `password` is [explained in Step 5](#generate_key).
+
+<a name="xhttp_socks_client"></a>
+
+<details>
+
+<summary>Your XHTTP SOCKS client will look like this:</summary>
+
+```json
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "listen": "127.0.0.1",
+            "port": "1080",
+            "protocol": "socks",
+            "settings": {
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "settings": {
+                "address": "10.0.0.1",
+                "port": 443,
+                "id": "4d6e0338-f67a-4187-bca3-902e232466bc",
+                "encryption": "none"
+            },
+            "streamSettings": {
+                "network": "xhttp",
+                "security": "reality",
+                "realitySettings": {
+                    "fingerprint": "chrome",
+                    "serverName": "example.com",
+                    "password": "onBX9VWPbGC3tIELZ9jblx7Hyu2aY4SPag1oxXHE41M",
+                    "shortId": ""
+                },
+                "xhttpSettings": {
+                    "path": "/something",
+                    "extra": {
+                        "xmux": {
+                            "maxConnections": 1
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
+```
+
+</details>
+
+### Step 7.3 - Android client configuration
+
+1. Create a new [VLESS configuration in v2rayNG](#step-31---android-client).
+
+2. Fill in the corresponding fields with an IP address and port of your server.
+
+   The client _id_ should be present in your [server configuration](#step-71---server-configuration).
+
+   ![](images/xray-android-v2rayng-reality-xhttp-1.png)
+
+3. Specify XHTTP settings as described below:
+
+   * In the _Network_ menu select _xhttp_.
+
+   * The _xhttp path_ field corresponds to the value in the [server configuration](#step-71---server-configuration).
+
+   * The _XHTTP Extra_ field specifies that only a single connection will be used to prevent blocking.
+
+   ![](images/xray-android-v2rayng-reality-xhttp-2.png)
+
+4. The Reality settings are as follows:
+
+    * In the _TLS_ menu select _reality_.
+
+    * The _PublicKey_ is the same as the `password` in the [SOCKS client configuration](#xhttp_socks_client).
+    How to generate it is [explained in Step 5](#generate_key).
+
+    * You may need to [tweak _Fingerprint_](#tweak_fingerprint) if you can't connect to your server.
+
+    ![](images/xray-android-v2rayng-reality-xhttp-3.png)
+
+5. Save your changes.
+
+6. Now, you can [test your connection](#check_connection).
+
+## Step 8 - Blocking ads
 
 As an alternative to a browser extension like uBlock Origin you can use Xray itself to block a large portion of ads.
 
@@ -1372,7 +1580,7 @@ Ad blocking can be achieved by adjusting your [Xray client](#step-321---socks-pr
 
 </details>
 
-## Step 6.1 - Blocking adult websites
+## Step 8.1 - Blocking adult websites
 
 Similarly to ads you can block adult websites, adjust your routing accordingly by adding a new item to the `domain` array:
 
@@ -1459,7 +1667,7 @@ Similarly to ads you can block adult websites, adjust your routing accordingly b
 
 </details>
 
-## Step 6.2 - Blocking specific time-wasters
+## Step 8.2 - Blocking specific time-wasters
 
 If you have specific websites where you tend to waste your time, you can block them individually,
 instead of using the categories mentioned above. This will create friction, and you will stop visiting them.
